@@ -1299,6 +1299,13 @@ else:
 
 if activity_events.empty:
     log("No relevant custom-visual activity events found in the available window.")
+    log(
+        "IMPORTANT: absence of events is expected and is NOT evidence of safe use. "
+        "GenerateCustomVisualAADAccessToken only fires for AppSource visuals when the "
+        "'AppSource Custom Visuals SSO' tenant setting is enabled, which is off by default. "
+        "No audit operation records a visual rendering, receiving, or transmitting data, so "
+        "an empty result cannot show that data was not extracted."
+    )
 else:
     display(activity_events["Operation"].value_counts().rename("events"))
     token_events = activity_events[
@@ -1307,7 +1314,10 @@ else:
     if not token_events.empty:
         log(
             f"Observed {len(token_events):,} custom-visual Entra token issuance events. "
-            "These events do not establish external transmission."
+            "These events do not establish external transmission. Note that the documented "
+            "Power BI audit schema carries no field identifying which visual requested the "
+            "token or the token's audience, so these events cannot be attributed to a "
+            "specific visual from the log alone."
         )
         grouping_columns = [
             column
@@ -1514,7 +1524,13 @@ if not scan_errors.empty:
 # 3. **Embedded packages:** establish whether each visual came from an approved organizational process or an unmanaged file.
 # 4. **Uncertified AppSource visuals:** review the reason certification is unavailable; external access can be legitimate.
 # 5. **Public registrations absent from the catalogue:** investigate delisting, identifier changes, and catalogue completeness.
-# 6. **Token issuance events:** identify the visual and audience, then correlate with approved SSO use. Issuance alone is not exfiltration.
+# 6. **Token issuance events:** the documented audit schema does not name the requesting visual or the token audience, so scope these by workspace and report and correlate with approved SSO use. Issuance alone is not exfiltration, and absence of issuance is not assurance.
+#
+# ### What the activity log cannot tell you
+#
+# Custom visual code runs in a sandboxed iframe in the user's browser. A call from a visual to an external endpoint goes directly from the browser to that endpoint and never traverses Microsoft infrastructure, so no Power BI, Fabric, or Microsoft 365 audit log records it. No operation fires when a visual renders, receives data, or transmits data.
+#
+# Consequently **absence of audit events is not exculpatory**: a clean activity log cannot be used to demonstrate that data was not extracted. The logged custom-visual operations record token and governance actions only. Native egress paths (`ExportReport`, `ExportArtifact`, `ExportTile`, `AnalyzeInExcel`, `AnalyzedByExternalApplication`) are logged but are not triggered by a visual's own outbound calls.
 #
 # ### Evidence required to confirm an incident
 #
