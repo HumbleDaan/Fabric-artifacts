@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.ipynb_checkpoints/
+*.log
+
+# Audit results and customer-specific working material stay outside source control.
+power-bi-custom-visual-audit/output/
+power-bi-custom-visual-audit/artifacts/
+power-bi-custom-visual-audit/customer-work/
